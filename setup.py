@@ -27,7 +27,8 @@ setup_requires = [
 install_requires = [
     'Kotti',
     'rgomes-velruse',
-    'openid-selector'
+    'openid-selector',
+    'pyramid_mako'
     ]
 
 

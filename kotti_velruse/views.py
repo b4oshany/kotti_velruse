@@ -10,10 +10,13 @@ from pyramid.httpexceptions import HTTPNotFound
 from pyramid.request import Request
 from pyramid.security import remember
 
+from kotti import get_settings
 from kotti.util import _
+from kotti.views import login as kotti_login
 from kotti.views.util import is_root
 
 from kotti_velruse import log
+from kotti_velruse.config import providers as login_providers
 from kotti_velruse.events import AfterLoggedInObject
 from kotti_velruse.events import after_kotti_velruse_loggedin
 
@@ -30,7 +33,7 @@ def includeme_views(config):
     config.add_view(login_select,
                     route_name='login',
                     request_method='GET',
-                    renderer='kotti_velruse:templates/login.mako')
+                    renderer='kotti_velruse:templates/login.pt')
     config.add_view(login_verify,
                     route_name='login',
                     request_method='POST',
@@ -47,7 +50,7 @@ def includeme_override_views(config):
     config.add_view(name='login',
                     view=login_select,
                     custom_predicates=( is_root, ),
-                    renderer='kotti_velruse:templates/login.mako')
+                    renderer='kotti_velruse:templates/login.pt')
 
 
 def includeme_static_views(config):
@@ -55,6 +58,7 @@ def includeme_static_views(config):
         import openid_selector
         config.add_static_view(name='js',     path='openid_selector:/js')
         config.add_static_view(name='css',    path='openid_selector:/css')
+        config.add_static_view(name='kotti_velruse_static',    path='kotti_velruse:/static')
         config.add_static_view(name='images', path='openid_selector:/images')
         log.info(_(u'openid_selector loaded successfully'))
     except Exception as e:
@@ -62,17 +66,37 @@ def includeme_static_views(config):
         raise e
 
 
-
 def login_select(context, request):
     log.debug( sys._getframe().f_code.co_name )
     came_from = request.params.get('came_from', request.resource_url(context))
     settings = request.registry.settings
+    login = request.params.get('login', '').lower()
+    password = request.params.get('password', '')
+
+    settings = request.registry.settings
     try:
-        #TODO:: before_kotti_velruse_loggedin(request)
+        providers = list(find_providers(settings))
+    except:
+        providers = ["facebook"]
+    providers_large = {}
+    for provider in providers:
+        provider_data = login_providers.get(provider, "")
+        if provider_data:
+            providers_large[provider] = provider_data
+    try:
+        # "if submit in the request, login with the user kotti account.
+        if 'submit' in request.POST:
+            return kotti_login.login(context, request)
         return {
+            'url': request.application_url + '/@@login',
             'project' : settings['kotti.site_title'],
             'came_from': came_from,
+            'password': password,
+            'login': login,
+            'providers_large': providers_large,
+            'providers_small': {},
             'login_url': request.route_url('login'),
+             'register': kotti_login.asbool(get_settings()['kotti.register']),
         }
     except Exception as e:
         log.exception(e)
@@ -80,7 +104,6 @@ def login_select(context, request):
 
 
 def login_verify(context, request):
-    import pdb; pdb.set_trace()
     ######################################################################################
     #                                                                                    #
     # Let's clarify the difference between "provider" and "method" in this function:     #

@@ -26,10 +26,13 @@ setup_requires = [
 
 install_requires = [
     'Kotti',
-    'rgomes-velruse',
+    'velruse==1.1.2',
     'openid-selector',
-    'pyramid_mako'
     ]
+
+dependency_links = [
+    'https://github.com/b4oshany/velruse/archive/v1.1.2.tar.gz'
+]
 
 
 setup(name=name,
@@ -59,7 +62,8 @@ setup(name=name,
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
       zip_safe=False,
-      setup_requires=setup_requires, 
+      dependency_links=dependency_links,
+      setup_requires=setup_requires,
       install_requires=install_requires,
 
       #TODO

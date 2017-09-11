@@ -31,7 +31,7 @@ install_requires = [
     ]
 
 dependency_links = [
-    'https://github.com/b4oshany/velruse/archive/v1.1.2.tar.gz'
+    'https://github.com/b4oshany/velruse/tarball/master#egg=velruse-1.1.2'
 ]
 
 
